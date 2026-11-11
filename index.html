@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Environment Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">SE</div>
+      <div>
+        <h2>Smart Environment</h2>
+        <span>Environmental Monitoring</span>
+      </div>
+    </div>
+
+    <nav>
+      <a class="active" href="#"><span>▣</span> Dashboard</a>
+      <a href="#measurements"><span>◷</span> History</a>
+      <a href="#device"><span>⚙</span> Device</a>
+      <a href="#alerts"><span>⚠</span> Alerts</a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="connection">
+        <span class="status-dot" id="connectionDot"></span>
+        <div>
+          <strong id="connectionTitle">USB disconnected</strong>
+          <small id="connectionSubtitle">Connect a controller</small>
+        </div>
+      </div>
+
+      <div class="language">
+        <button class="active-lang" data-lang="ro" type="button">RO</button>
+        <button data-lang="en" type="button">EN</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <header class="header">
+      <div>
+        <h1>Dashboard</h1>
+        <p>Monitorizarea mediului în timp real</p>
+      </div>
+
+      <div class="header-right">
+        <button class="connect-btn" id="connectButton" type="button">
+          ⛓ Conectare USB
+        </button>
+
+        <button class="disconnect-btn" id="disconnectButton" type="button" disabled>
+          Deconectare
+        </button>
+
+        <div class="time" id="currentTime">00:00:00</div>
+      </div>
+    </header>
+
+    <section class="status-bar" id="device">
+      <div>
+        <span class="label">MICROCONTROLER</span>
+        <strong id="deviceName">Nedetectat</strong>
+      </div>
+
+      <div>
+        <span class="label">COMUNICARE</span>
+        <strong id="connectionType">USB Serial</strong>
+      </div>
+
+      <div>
+        <span class="label">SYSTEM STATUS</span>
+        <strong id="systemStatus" class="offline">● OFFLINE</strong>
+      </div>
+
+      <div>
+        <span class="label">LAST UPDATE</span>
+        <strong id="lastUpdate">Așteptare date...</strong>
+      </div>
+    </section>
+
+    <section class="sensor-grid">
+
+      <div class="sensor-card temperature" id="temperatureCard">
+        <div class="card-header">
+          <div>
+            <span class="sensor-label">SHT3X-DIS</span>
+            <h3>Temperatură</h3>
+          </div>
+          <div class="sensor-icon">🌡</div>
+        </div>
+
+        <div class="sensor-value">
+          <span id="temperature">--</span><small>°C</small>
+        </div>
+
+        <div class="sensor-info">
+          <span>Interval orientativ</span>
+          <strong>18 – 30 °C</strong>
+        </div>
+      </div>
+
+      <div class="sensor-card humidity" id="humidityCard">
+        <div class="card-header">
+          <div>
+            <span class="sensor-label">SHT3X-DIS</span>
+            <h3>Umiditate</h3>
+          </div>
+          <div class="sensor-icon">💧</div>
+        </div>
+
+        <div class="sensor-value">
+          <span id="humidity">--</span><small>%</small>
+        </div>
+
+        <div class="sensor-info">
+          <span>Interval orientativ</span>
+          <strong>30 – 70 %</strong>
+        </div>
+      </div>
+
+      <div class="sensor-card gas-card" id="gasCard">
+        <div class="card-header">
+          <div>
+            <span class="sensor-label">FLYING.FISH MQ SENSOR</span>
+            <h3>Nivel gaz (RAW)</h3>
+          </div>
+          <div class="sensor-icon">☁</div>
+        </div>
+
+        <div class="sensor-value">
+          <span id="gas">--</span><small>RAW</small>
+        </div>
+
+        <div class="sensor-info">
+          <span>Prag demo temporar</span>
+          <strong>350 RAW</strong>
+        </div>
+      </div>
+
+      <div class="sensor-card fan-card">
+        <div class="card-header">
+          <div>
+            <span class="sensor-label">VENTILAȚIE</span>
+            <h3>Stare ventilator</h3>
+          </div>
+          <div class="sensor-icon">🌀</div>
+        </div>
+
+        <div class="fan-status">
+          <span class="fan-indicator" id="fanIndicator"></span>
+          <div>
+            <strong id="fanStatus">Neraportat</strong>
+            <small id="fanInfo">Așteaptă date de la controler</small>
+          </div>
+        </div>
+
+        <div class="sensor-info">
+          <span>Stare</span>
+          <strong id="fanMode">NECUNOSCUT</strong>
+        </div>
+      </div>
+
+      <div class="sensor-card usb-card">
+        <div class="card-header">
+          <div>
+            <span class="sensor-label">CONECTIVITATE</span>
+            <h3>Port USB</h3>
+          </div>
+          <div class="sensor-icon">🔌</div>
+        </div>
+
+        <div class="usb-status">
+          <span class="usb-large" id="usbIndicator">●</span>
+          <div>
+            <strong id="usbStatus">Deconectat</strong>
+            <small id="usbDetails">Alege portul serial</small>
+          </div>
+        </div>
+
+        <div class="sensor-info">
+          <span>Protocol</span>
+          <strong>USB Serial</strong>
+        </div>
+      </div>
+
+    </section>
+
+    <section class="components-card">
+      <div class="chart-header">
+        <div>
+          <span class="sensor-label">COMPONENTE UTILIZATE</span>
+          <h2>Senzori și interfață</h2>
+        </div>
+      </div>
+
+      <div class="component-list">
+        <div>
+          <strong>SHT3X-DIS</strong>
+          <span>Măsurarea temperaturii și umidității prin I²C</span>
+        </div>
+
+        <div>
+          <strong>Flying.Fish MQ Sensor</strong>
+          <span>Detectarea gazelor; valoare analogică brută (RAW)</span>
+        </div>
+
+        <div>
+          <strong>Arduino Uno R3 / STM32F429I-DISC1</strong>
+          <span>Microcontroler identificat prin mesajul transmis pe USB</span>
+        </div>
+
+        <div>
+          <strong>USB Serial</strong>
+          <span>Transferul datelor către browser</span>
+        </div>
+      </div>
+
+      <p class="note">
+        Notă: valoarea RAW a senzorului MQ nu reprezintă ppm.
+        Pragul de 350 RAW este doar demonstrativ și necesită
+        identificarea exactă și calibrarea senzorului.
+      </p>
+    </section>
+
+    <section class="charts">
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <span class="sensor-label">DATE DE MEDIU</span>
+            <h2>Temperatură și umiditate</h2>
+          </div>
+
+          <span class="live-label waiting" id="liveLabel">
+            ● AȘTEPTARE DATE USB
+          </span>
+        </div>
+
+        <div class="chart-container">
+          <canvas id="environmentChart"></canvas>
+        </div>
+      </div>
+
+      <div class="alerts-card" id="alerts">
+        <div class="chart-header">
+          <div>
+            <span class="sensor-label">MONITORIZARE</span>
+            <h2>Alarme active</h2>
+          </div>
+        </div>
+
+        <div class="alert-summary" id="alertSummary">
+          <span class="normal-indicator" id="alertIndicator">✓</span>
+          <div>
+            <strong id="alertTitle">Fără alerte</strong>
+            <small id="alertSubtitle">Sistemul funcționează normal</small>
+          </div>
+        </div>
+
+        <div class="alert-list" id="alertList">
+          <p class="no-alerts">
+            Alertele vor apărea după primirea măsurătorilor.
+          </p>
+        </div>
+      </div>
+
+    </section>
+
+    <section class="history-card" id="measurements">
+      <div class="chart-header">
+        <div>
+          <span class="sensor-label">MĂSURĂTORI</span>
+          <h2>Istoric măsurători</h2>
+        </div>
+
+        <button class="refresh-btn" id="clearHistoryButton" type="button">
+          Șterge istoricul
+        </button>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ORA</th>
+              <th>TEMPERATURĂ</th>
+              <th>UMIDITATE</th>
+              <th>GAZ</th>
+              <th>VENTILATOR</th>
+              <th>STATUS</th>
+            </tr>
+          </thead>
+
+          <tbody id="measurementTable">
+            <tr>
+              <td colspan="6" class="empty-row">
+                Nu au fost primite măsurători.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      <span>Smart Environment Monitoring System</span>
+      <span>SHT3X-DIS • Flying.Fish MQ • USB Serial</span>
+    </footer>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>

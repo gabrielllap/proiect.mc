@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="ro">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Arduino USB Test</title>
+
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        min-height: 100vh;
+        font-family: Arial, sans-serif;
+
+        background: radial-gradient(
+          circle at top,
+          #172033 0%,
+          #090d15 45%,
+          #05070b 100%
+        );
+
+        color: #ffffff;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        padding: 30px;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 1000px;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .header h1 {
+        font-size: 32px;
+        letter-spacing: 2px;
+      }
+
+      .header p {
+        color: #8e9aaa;
+        margin-top: 10px;
+      }
+
+      .connection {
+        background: rgba(20, 27, 40, 0.9);
+        border: 1px solid #293447;
+        border-radius: 14px;
+
+        padding: 20px;
+
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        margin-bottom: 25px;
+      }
+
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #777;
+      }
+
+      .dot.connected {
+        background: #35d07f;
+        box-shadow: 0 0 12px rgba(53, 208, 127, 0.8);
+      }
+
+      button {
+        border: none;
+        border-radius: 8px;
+
+        padding: 12px 20px;
+
+        background: #2563eb;
+        color: white;
+
+        font-size: 14px;
+        font-weight: bold;
+
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: #1d4ed8;
+      }
+
+      button.disconnect {
+        background: #991b1b;
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+      }
+
+      .card {
+        background: rgba(20, 27, 40, 0.9);
+
+        border: 1px solid #293447;
+
+        border-radius: 14px;
+
+        padding: 25px;
+
+        text-align: center;
+      }
+
+      .card h2 {
+        color: #8e9aaa;
+        font-size: 15px;
+        margin-bottom: 15px;
+      }
+
+      .value {
+        font-size: 42px;
+        font-weight: bold;
+      }
+
+      .unit {
+        font-size: 18px;
+        color: #8e9aaa;
+      }
+
+      .raw {
+        color: #f59e0b;
+      }
+
+      .log {
+        margin-top: 25px;
+
+        background: #05070b;
+
+        border: 1px solid #293447;
+
+        border-radius: 14px;
+
+        padding: 20px;
+      }
+
+      .log h2 {
+        font-size: 15px;
+        margin-bottom: 15px;
+        color: #8e9aaa;
+      }
+
+      #serialLog {
+        height: 180px;
+        overflow-y: auto;
+
+        font-family: monospace;
+        font-size: 13px;
+
+        color: #65d9ff;
+
+        white-space: pre-wrap;
+      }
+
+      .error {
+        color: #ff6b6b !important;
+      }
+
+      @media (max-width: 700px) {
+        .cards {
+          grid-template-columns: 1fr;
+        }
+
+        .connection {
+          flex-direction: column;
+          gap: 15px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>SMART ENVIRONMENT</h1>
+        <p>Arduino UNO R3 — USB Sensor Test</p>
+      </div>
+
+      <div class="connection">
+        <div class="status">
+          <div id="statusDot" class="dot"></div>
+
+          <div>
+            <strong id="statusText">Deconectat</strong>
+            <br />
+            <small id="portText">USB Serial</small>
+          </div>
+        </div>
+
+        <button id="connectButton">🔌 Conectare Arduino</button>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <h2>🌡️ TEMPERATURĂ</h2>
+
+          <div>
+            <span id="temperature" class="value">--</span>
+            <span class="unit">°C</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>💧 UMIDITATE</h2>
+
+          <div>
+            <span id="humidity" class="value">--</span>
+            <span class="unit">%</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>🟠 GAZ SENSOR</h2>
+
+          <div>
+            <span id="gas" class="value raw">--</span>
+            <span class="unit">RAW</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="log">
+        <h2>📡 DATE PRIMITE PRIN USB</h2>
+
+        <div id="serialLog">Aștept conectarea Arduino...</div>
+      </div>
+    </div>
+
+    <script>
+      let port = null;
+      let reader = null;
+
+      const connectButton = document.getElementById("connectButton");
+
+      const statusDot = document.getElementById("statusDot");
+      const statusText = document.getElementById("statusText");
+
+      const temperatureElement = document.getElementById("temperature");
+
+      const humidityElement = document.getElementById("humidity");
+
+      const gasElement = document.getElementById("gas");
+
+      const serialLog = document.getElementById("serialLog");
+
+      // --------------------------------------------------
+      // CONECTARE
+      // --------------------------------------------------
+
+      connectButton.addEventListener("click", async () => {
+        if (port) {
+          disconnectArduino();
+          return;
+        }
+
+        await connectArduino();
+      });
+
+      async function connectArduino() {
+        if (!("serial" in navigator)) {
+          alert(
+            "Browserul nu suporta Web Serial.\n\n" +
+              "Folosește Google Chrome sau Microsoft Edge.",
+          );
+
+          return;
+        }
+
+        try {
+          // Cere utilizatorului sa aleaga portul Arduino
+          port = await navigator.serial.requestPort();
+
+          // Deschide portul la 9600 baud
+          await port.open({
+            baudRate: 9600,
+          });
+
+          setConnectedState(true);
+
+          readSerialData();
+        } catch (error) {
+          console.error(error);
+
+          setConnectedState(false);
+        }
+      }
+
+      // --------------------------------------------------
+      // CITIRE DATE SERIAL
+      // --------------------------------------------------
+
+      async function readSerialData() {
+        const decoder = new TextDecoder();
+
+        let buffer = "";
+
+        try {
+          while (port && port.readable) {
+            reader = port.readable.getReader();
+
+            try {
+              while (true) {
+                const { value, done } = await reader.read();
+
+                if (done) {
+                  break;
+                }
+
+                if (value) {
+                  buffer += decoder.decode(value, { stream: true });
+
+                  // Arduino trimite cate o linie
+                  // terminata cu \n
+
+                  const lines = buffer.split("\n");
+
+                  buffer = lines.pop();
+
+                  for (let line of lines) {
+                    line = line.trim();
+
+                    if (line.length > 0) {
+                      processData(line);
+                    }
+                  }
+                }
+              }
+            } finally {
+              reader.releaseLock();
+            }
+          }
+        } catch (error) {
+          console.error(error);
+
+          addLog("EROARE USB: " + error);
+
+          setConnectedState(false);
+        }
+      }
+
+      // --------------------------------------------------
+      // PROCESARE DATE
+      // --------------------------------------------------
+
+      function processData(line) {
+        addLog(line);
+
+        /*
+            Exemplu:
+
+            TEMP:24.31,HUM:48.52,GAS:157
+        */
+
+        if (!line.startsWith("TEMP:")) {
+          return;
+        }
+
+        const parts = line.split(",");
+
+        let temperature = null;
+        let humidity = null;
+        let gas = null;
+
+        for (const part of parts) {
+          if (part.startsWith("TEMP:")) {
+            temperature = parseFloat(part.replace("TEMP:", ""));
+          }
+
+          if (part.startsWith("HUM:")) {
+            humidity = parseFloat(part.replace("HUM:", ""));
+          }
+
+          if (part.startsWith("GAS:")) {
+            gas = parseInt(part.replace("GAS:", ""));
+          }
+        }
+
+        // Actualizare temperatura
+
+        if (!isNaN(temperature)) {
+          temperatureElement.textContent = temperature.toFixed(2);
+        }
+
+        // Actualizare umiditate
+
+        if (!isNaN(humidity)) {
+          humidityElement.textContent = humidity.toFixed(2);
+        }
+
+        // Actualizare gaz
+
+        if (!isNaN(gas)) {
+          gasElement.textContent = gas;
+        }
+      }
+
+      // --------------------------------------------------
+      // LOG
+      // --------------------------------------------------
+
+      function addLog(message) {
+        const current = serialLog.textContent;
+
+        if (current === "Aștept conectarea Arduino...") {
+          serialLog.textContent = "";
+        }
+
+        serialLog.textContent += message + "\n";
+
+        // Pastram doar ultimele ~20 linii
+
+        const lines = serialLog.textContent
+          .split("\n")
+          .filter((line) => line !== "");
+
+        if (lines.length > 20) {
+          serialLog.textContent = lines.slice(-20).join("\n");
+        }
+
+        serialLog.scrollTop = serialLog.scrollHeight;
+      }
+
+      // --------------------------------------------------
+      // STATUS
+      // --------------------------------------------------
+
+      function setConnectedState(connected) {
+        if (connected) {
+          statusDot.classList.add("connected");
+
+          statusText.textContent = "Arduino conectat";
+
+          connectButton.textContent = "Deconectare";
+
+          connectButton.classList.add("disconnect");
+        } else {
+          statusDot.classList.remove("connected");
+
+          statusText.textContent = "Deconectat";
+
+          connectButton.textContent = "🔌 Conectare Arduino";
+
+          connectButton.classList.remove("disconnect");
+        }
+      }
+
+      // --------------------------------------------------
+      // DECONectare
+      // --------------------------------------------------
+
+      async function disconnectArduino() {
+        try {
+          if (reader) {
+            await reader.cancel();
+
+            reader.releaseLock();
+
+            reader = null;
+          }
+
+          if (port) {
+            await port.close();
+
+            port = null;
+          }
+        } catch (error) {
+          console.error(error);
+        }
+
+        setConnectedState(false);
+      }
+    </script>
+  </body>
+</html>
